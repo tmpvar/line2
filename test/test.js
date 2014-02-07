@@ -20,7 +20,6 @@ describe('line2', function() {
     });
   });
 
-
   describe('#fromPoints', function() {
     it('computes the slope and yintercept', function() {
       [
@@ -200,6 +199,46 @@ describe('line2', function() {
     it('returns false when not contained (diagonal)', function() {
       var l = Line2(0, 0, 10, 10);
       ok(!l.containsPoint(Vec2(5, 2)));
+    });
+  });
+
+  describe('#intersectCircle', function() {
+    it('returns an array of vec2s at intersection point (vertical)', function()
+      var l = Line(100, 0, 100, 100);
+      var r = l.intersectCircle(Vec2(50, 50), 55);
+      ok(r.length === 2);
+    });
+
+    it('returns an array of vec2s at intersection point (vertical)', function()
+      var l = Line(0, 0, 100, 0);
+      var r = l.intersectCircle(Vec2(50, 50), 55);
+      ok(r.length === 2);
+    });
+
+    it('returns an array of vec2s at intersection point (diagonal)', function()
+      var l = Line(0, 0, 100, 100);
+      var r = l.intersectCircle(Vec2(50, 50), 10);
+      ok(r.length === 2);
+      ok(r[0].equal(40,40));
+      ok(r[1].equal(60,60));
+    });
+
+    it('returns false when no intersection (diagonal)', function()
+      var l = Line(0, 0, 100, 100);
+      var r = l.intersectCircle(Vec2(50, 0), 10);
+      ok(r === false);
+    });
+
+    it('returns false when no intersection (vertical)', function()
+      var l = Line(100, 0, 100, 100);
+      var r = l.intersectCircle(Vec2(50, 0), 10);
+      ok(r === false);
+    });
+
+    it('returns false when no intersection (horizontal)', function()
+      var l = Line(0, 100, 100, 100);
+      var r = l.intersectCircle(Vec2(50, 0), 10);
+      ok(r === false);
     });
   });
 });
