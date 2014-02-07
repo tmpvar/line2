@@ -8,17 +8,16 @@ var isArray = function (a) {
 
 var defined = function(a) {
   return typeof a !== 'undefined';
-}
+};
 
 var finite = function(a) {
   return a !== Infinity && a !== -Infinity;
 };
 
-
 function Line2(slope, yintercept, x2, y2) {
 
   if (!(this instanceof Line2)) {
-    return new Line2(slope, yintercept);
+    return new Line2(slope, yintercept, x2, y2);
   }
 
   if (defined(x2) && defined(y2)) {
@@ -164,6 +163,16 @@ Line2.prototype.closestPointTo = function(vec) {
   } else {
     var line = Line2.fromPoints(vec.x, vec.y, vec.x+s, vec.y-s);
     return this.intersect(line);
+  }
+};
+
+Line2.prototype.containsPoint = function(vec) {
+  if (this.isHorizontal()) {
+    return vec.y === this.yintercept();
+  } else if (this.isVertical()) {
+    return vec.x === this.xintercept();
+  } else {
+    return vec.y === this.slope() * vec.x + this.yintercept();
   }
 };
 

@@ -18,7 +18,7 @@ describe('line2', function() {
       ok(l.slope() === 1);
       ok(l.yintercept() === 0);
     });
-  })
+  });
 
 
   describe('#fromPoints', function() {
@@ -102,6 +102,38 @@ describe('line2', function() {
     it('finds the closest point to this line (diagonal)', function() {
       var l = Line2.fromPoints(0, 0, 100, 100);
       ok(l.closestPointTo(Vec2(25, 75)).equal(Vec2(50, 50)));
+    });
+  });
+
+  describe('#containsPoint', function() {
+    it('returns false when not contained (horizontal)', function() {
+      var l = Line2(0, 0, 10, 0);
+      ok(!l.containsPoint(Vec2(5, 1)));
+    });
+
+    it('returns true when contained (horizontal)', function() {
+      var l = Line2(0, 0, 10, 0);
+      ok(l.containsPoint(Vec2(5, 0)));
+    });
+
+    it('returns false when not contained (vertical)', function() {
+      var l = Line2(10, 0, 10, 10);
+      ok(!l.containsPoint(Vec2(5, 1)));
+    });
+
+    it('returns true when contained (vertical)', function() {
+      var l = Line2(10, 0, 10, 10);
+      ok(l.containsPoint(Vec2(10, 5)));
+    });
+
+    it('returns true when contained (diagonal)', function() {
+      var l = Line2(0, 0, 10, 10);
+      ok(l.containsPoint(Vec2(5, 5)));
+    });
+
+    it('returns false when not contained (diagonal)', function() {
+      var l = Line2(0, 0, 10, 10);
+      ok(!l.containsPoint(Vec2(5, 2)));
     });
   });
 });
