@@ -45,9 +45,15 @@ describe('line2', function() {
 
     it('returns false when lines are parallel', function() {
       var l1 = Line2.fromPoints(0, 0, 10, 10);
-      var l2 = Line2.fromPoints(5, 5, 50, 50);
+      var l2 = Line2.fromPoints(0, 5, 5, 10);
 
       ok(!l1.intersect(l2));
+    });
+
+    it('returns true when lines are collinear', function() {
+      var l1 = Line2.fromPoints(0, 0, 10, 10);
+      var l2 = Line2.fromPoints(5, 5, 9, 9);
+      ok(l1.intersect(l2) === true);
     });
 
     it('finds the intersection of perpendicular lines (vertical-vertical)', function() {
@@ -62,7 +68,61 @@ describe('line2', function() {
       var l2 = Line2.fromPoints(30, 30, 30, 0);
       ok(l1.intersect(l2).equal(30, 13.6363635));
       ok(l2.intersect(l1).equal(30, 13.6363635));
+    });
 
+    it('returns a vec2 when intersected with a segment (horizontal)', function() {
+      var l1 = Line2(0, 0, 100, 0);
+      ok(l1.intersect(5, 5, 5, -5).equal(5, 0));
+    });
+
+    it('returns false when no intersection (horizontal)', function() {
+      var l1 = Line2(0, 0, 100, 0);
+      ok(!l1.intersect(5, 5, 5, 1));
+    });
+
+    it('returns true when colinear (horizontal)', function() {
+      var l1 = Line2(0, 0, 100, 0);
+      ok(l1.intersect(0, 0, 5, 0) === true);
+    });
+
+    it('returns false when parallel (horizontal)', function() {
+      var l1 = Line2(0, 0, 100, 0);
+      ok(l1.intersect(0, 5, 5, 5) === false);
+    });
+
+    it('returns true when colinear (vertical)', function() {
+      var l1 = Line2(100, 0, 100, 100);
+      ok(l1.intersect(100, 10, 100, 50) === true);
+    });
+
+    it('returns vec2 when intersection (vertical)', function() {
+      var l1 = Line2(100, 0, 100, 100);
+      ok(l1.intersect(50, 50, 200, 50).equal(100, 50));
+    });
+
+    it('returns false when parallel (vertical)', function() {
+      var l1 = Line2(100, 0, 100, 100);
+      ok(l1.intersect(5, 0, 5, 5) === false);
+    });
+
+    it('returns a vec2 when intersected with a segment (diagonal)', function() {
+      var l1 = Line2(0, 0, 100, 100);
+      ok(l1.intersect(25, 75, 75, 25).equal(50, 50));
+    });
+
+    it('returns false when no intersection (diagonal)', function() {
+      var l1 = Line2(0, 0, 100, 100);
+      ok(!l1.intersect(25, 75, 30, 75));
+    });
+
+    it('returns true when colinear (diagonal)', function() {
+      var l1 = Line2(0, 0, 100, 0);
+      ok(l1.intersect(0, 0, 5, 0) === true);
+    });
+
+    it('returns false when parallel (diagonal)', function() {
+      var l1 = Line2(0, 0, 100, 100);
+      ok(l1.intersect(0, 5, 5, 10) === false);
     });
   });
 
@@ -106,6 +166,12 @@ describe('line2', function() {
   });
 
   describe('#containsPoint', function() {
+    it('may take an x,y', function() {
+      var l = Line2(0, 0, 10, 0);
+      ok(!l.containsPoint(5, 1));
+      ok(l.containsPoint(5, 0));
+    });
+
     it('returns false when not contained (horizontal)', function() {
       var l = Line2(0, 0, 10, 0);
       ok(!l.containsPoint(Vec2(5, 1)));

@@ -1,5 +1,6 @@
 if (typeof require !== 'undefined') {
   var Vec2 = require('vec2');
+  var segseg = require('segseg');
 }
 
 var isArray = function (a) {
@@ -69,14 +70,83 @@ Line2.prototype.slope = function(val) {
   return this._slope || 0;
 };
 
-Line2.prototype.intersect = function(line) {
+Line2.prototype.intersectSegment = function(x1, y1, x2, y2) {
+
+  var dx = x2 - x1;
+  var dy = y2 - y1;
+  var lx1, ly1, lx2, ly2;
+  var horizontal = this.isHorizontal();
+  var vertical = this.isVertical();
+
+  // vertical
+  if (dx === 0) {
+    if (vertical) {
+      return x1 === this.xintercept();
+    }
+
+  // horizontal
+  } else if (dy === 0) {
+    // parallel
+    if (horizontal) {
+      return y1 === this.yintercept();
+    }
+
+  // diagonal
+  } else {
+    if (dy/dx === this.slope()) {
+      return y1 === this.slope() * x1 + this.yintercept()
+    }
+  }
+
+  if (x1 > x2) {
+    lx1 = x2-10;
+    lx2 = x1+10;
+  } else {
+    lx1 = x1-10;
+    lx2 = x2+10;
+  }
+
+  var isect;
+  if (this.isHorizontal()) {
+    y = this.yintercept();
+    isect = segseg(lx1, y, lx2, y, x1, y1, x2, y2);
+  } else if (this.isVertical()) {
+    if (y1 > y2) {
+      ly1 = y2-10;
+      ly2 = y1+10;
+    } else {
+      ly1 = y1-10;
+      ly2 = y2+10;
+    }
+    var x = this.xintercept();
+
+    isect = segseg(x, ly1, x, ly2, x1, y1, x2, y2);
+  } else {
+    ly1 = this.slope() * lx1 + this.yintercept();
+    ly2 = this.slope() * lx2 + this.yintercept();
+    isect = segseg(lx1, ly1, lx2, ly2, x1, y1, x2, y2);
+  }
+
+  if (isect && isect !== true) {
+    return Vec2.fromArray(isect);
+  }
+
+  return isect;
+};
+
+Line2.prototype.intersect = function(line, y1, x2, y2) {
+
+  if ((defined(x2) && defined(y2)) || defined(line.end)) {
+    return this.intersectSegment(line, y1, x2, y2);
+  }
 
   var s1 = this.slope();
   var s2 = line.slope();
 
   // Parallel lines
   if (s1 === s2) {
-    return false;
+    return (this.yintercept() === line.yintercept() &&
+            this.xintercept() === line.xintercept());
   }
 
   var fs1 = finite(s1);
@@ -166,13 +236,19 @@ Line2.prototype.closestPointTo = function(vec) {
   }
 };
 
-Line2.prototype.containsPoint = function(vec) {
+Line2.prototype.containsPoint = function(vec, y) {
+  var x = vec;
+  if (!defined(y)) {
+    y = vec.y;
+    x = vec.x;
+  }
+
   if (this.isHorizontal()) {
-    return vec.y === this.yintercept();
+    return y === this.yintercept();
   } else if (this.isVertical()) {
-    return vec.x === this.xintercept();
+    return x === this.xintercept();
   } else {
-    return vec.y === this.slope() * vec.x + this.yintercept();
+    return y === this.slope() * x + this.yintercept();
   }
 };
 
