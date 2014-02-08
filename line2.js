@@ -11,6 +11,10 @@ var defined = function(a) {
   return typeof a !== 'undefined';
 };
 
+var definedOr = function(a, defaultValue) {
+  return defined(a) ? a : defaultValue;
+};
+
 var finite = function(a) {
   return a !== Infinity && a !== -Infinity;
 };
@@ -37,37 +41,37 @@ function Line2(slope, yintercept, x2, y2) {
 
 Line2.prototype.yintercept = function(val) {
 
-  if (val) {
+  if (defined(val)) {
     if (finite(val)) {
       val = Vec2.clean(val);
     }
 
     this._yintercept = val;
   }
-  return this._yintercept || 0;
+  return definedOr(this._yintercept, null);
 }
 
 Line2.prototype.xintercept = function(val) {
 
-  if (val) {
+  if (defined(val)) {
     if (finite(val)) {
       val = Vec2.clean(val);
     }
 
     this._xintercept = val;
   }
-  return this._xintercept || 0;
+  return definedOr(this._xintercept, null);
 }
 
 Line2.prototype.slope = function(val) {
-  if (val) {
+  if (defined(val)) {
     if (finite(val)) {
       val = Vec2.clean(val);
     }
 
     this._slope = val;
   }
-  return this._slope || 0;
+  return definedOr(this._slope, null);
 };
 
 Line2.prototype.intersectSegment = function(x1, y1, x2, y2) {
@@ -134,9 +138,68 @@ Line2.prototype.intersectSegment = function(x1, y1, x2, y2) {
   return isect;
 };
 
+Line2.prototype.createPerpendicular = function(vec) {
+  if (this.isVertical()) {
+    return new Line2(0, vec.y);
+  } else if (this.isHorizontal()) {
+    var l = new Line2();
+    l.xintercept(vec.x);
+    l.slope(Infinity);
+    return l;
+  } else {
+    var perpSlope = -1/this.slope();
+    return new Line2(perpSlope, vec.y - perpSlope * vec.x);
+  }
+};
+
+Line2.prototype.intersectCircle = function(vec, radius) {
+
+  var m = this.slope();
+  var b = this.yintercept();
+
+  var h = vec.x;
+  var k = vec.y;
+  var r = radius;
+
+  var B = b-k;
+  var a = m*b+1;
+  var b = -2*h + 2*B*m;
+  var c = (B*B) + (h*h) - r*r;
+  var det = Math.sqrt(b*b - 4*a*c);
+  var den = 2*a;
+
+  var x = (-b + det) / den;
+  var x2 = (-b - det) / den;
+
+  return [
+    Vec2(x, this.solveForY(x)),
+    Vec2(x2, this.solveForY(x2)),
+  ];
+};
+
+var det = function(x1, y1, x2, y2) {
+  return x1*y2 - y1*x2;
+};
+
+Line2.prototype.solveForX = function(y) {
+  if (this.isVertical()) {
+    return this.xintercept();
+  } else {
+    return (y - this.yintercept()) / this.slope();
+  }
+};
+
+Line2.prototype.solveForY = function(x) {
+  if (this.isHorizontal()) {
+    return this.yintercept();
+  } else {
+    return this.slope() * x + this.yintercept();
+  }
+};
+
 Line2.prototype.intersect = function(line, y1, x2, y2) {
 
-  if ((defined(x2) && defined(y2)) || defined(line.end)) {
+  if ((defined(y1) && defined(y2)) || defined(line.end)) {
     return this.intersectSegment(line, y1, x2, y2);
   }
 
@@ -149,26 +212,38 @@ Line2.prototype.intersect = function(line, y1, x2, y2) {
             this.xintercept() === line.xintercept());
   }
 
-  var fs1 = finite(s1);
-  var fs2 = finite(s2);
-  var yi1 = this.yintercept();
-  var yi2 = line.yintercept();
-  var x;
+  if (finite(s1) && finite(s2)) {
 
-  if (fs1 && fs2) {
-    var yi = yi1 + yi2;
-    var si = s1 - s2;
-    x = yi/si;
-    return Vec2(x, s1*x + yi1);
+    var x1 = line.solveForX(-1);
+    var y1 = line.solveForY(x1);
+    var x2 = line.solveForX(1);
+    var y2 = line.solveForY(x2);
 
+    var x3 = this.solveForX(-1);
+    var y3 = this.solveForY(x3);
+    var x4 = this.solveForX(1);
+    var y4 = this.solveForY(x4);
+
+    var a = det(x1, y1, x2, y2);
+    var b = det(x3, y3, x4, y4);
+
+    var xnum = det(a, x1 - x2, b, x3 - x4);
+    var ynum = det(a, y1 - y2, b, y3 - y4);
+
+    var den = det(
+      x1 - x2, y1 - y2,
+      x3 - x4, y3 - y4
+    );
+
+    return Vec2(xnum/den, ynum/den);
   } else {
     var slope, yi, x = this.xintercept() || line.xintercept();
-    if (!fs1) {
+    if (!finite(s1)) {
       slope = s2;
-      yi = yi2;
+      yi = line.yintercept();
     } else {
       slope = s1;
-      yi = yi1;
+      yi = this.yintercept();
     }
 
     // Diagonal line
@@ -202,19 +277,21 @@ Line2.fromPoints = function(x1, y1, x2, y2) {
 
   var line = new Line2();
   var slope = (y2 - y1) / (x2 - x1);
-
   line.slope(slope);
-  line.yintercept(y1 - line.slope() * x1);
 
-  if (!finite(slope)) {
+  if (line.isHorizontal()) {
+    line.yintercept(y1);
+  } else if (line.isVertical()) {
     line.xintercept(x2);
+  } else {
+    line.yintercept(y1 - slope * x1);
   }
 
   return line;
 };
 
 Line2.prototype.isHorizontal = function() {
-  return this.slope() === 0;
+  return !this.slope();
 };
 
 Line2.prototype.isVertical = function() {
@@ -231,8 +308,7 @@ Line2.prototype.closestPointTo = function(vec) {
   } else if (this.isVertical()) {
     return Vec2(xi, vec.y);
   } else {
-    var line = Line2.fromPoints(vec.x, vec.y, vec.x+s, vec.y-s);
-    return this.intersect(line);
+    return this.intersect(this.createPerpendicular(vec));
   }
 };
 
