@@ -158,65 +158,54 @@ Line2.prototype.createPerpendicular = function(vec) {
 
 Line2.prototype.intersectCircle = function(vec, radius) {
 
-  var closest = this.closestPointTo(vec);
-  var l2 = closest.subtract(vec, true).lengthSquared();
-  var r2 = radius*radius;
+  var r2 = radius*radius,
+      slope = this.slope(),
+      yintercept = this.yintercept(),
+      f, g, v1, v2;
 
-  if (l2 > r2) {
-    return [];
-  } else if (l2 < r2) {
-    var v1, v2, equal = closest.equal(vec);
-
-    if (equal && this.isHorizontal()) {
-      v1 = vec.add(new Vec2(radius, 0), true);
-      v2 = vec.add(new Vec2(-radius, 0), true);
-    } else if (equal && this.isVertical()) {
-      v1 = vec.add(new Vec2(0, radius), true);
-      v2 = vec.add(new Vec2(0, -radius), true);
-    } else {
-
-      var slope = this.slope(),
-          yintercept = this.yintercept(),
-          f, g;
-
-      if (this.isHorizontal()) {
-        f = 1;
-        g = 0;
-      } else if (this.isVertical()) {
-        slope = radius;
-        yintercept = r2;
-        f = 0;
-        g = slope;
-      } else {
-        f = 1/slope;
-        g = 1
-      }
-
-      var x0 = (this.isVertical()) ? this.xintercept() : 1;
-      var y0 = yintercept + slope;
-      var f2 = f*f;
-      var g2 = g*g;
-
-      var tmp = f * (vec.y - y0) - g * (vec.x - x0);
-      var discriminant = Math.sqrt(r2 * (f2 + g2) - (tmp*tmp));
-
-      if (isNaN(discriminant)) {
-        discriminant = 0;
-      }
-
-      var first = f * (vec.x - x0) + g * (vec.y - y0);
-      var den = f2 + g2;
-      var t1 = (first + discriminant)/den;
-      var t2 = (first - discriminant)/den;
-
-      v1 = new Vec2(x0 + t1*f, y0 + t1*g);
-      v2 = new Vec2(x0 + t2*f, y0 + t2*g);
-    }
-
-    return [v1, v2];
-  } else if (r2 === l2) {
-    return [closest];
+  if (this.isHorizontal()) {
+    f = 1;
+    g = 0;
+  } else if (this.isVertical()) {
+    slope = radius;
+    yintercept = r2;
+    f = 0;
+    g = slope;
+  } else {
+    f = 1/slope;
+    g = 1
   }
+
+  var x0 = (this.isVertical()) ? this.xintercept() : 1;
+  var y0 = yintercept + slope;
+  var f2 = f*f;
+  var g2 = g*g;
+
+  var tmp = f * (vec.y - y0) - g * (vec.x - x0);
+  tmp *= tmp;
+  var den = f2 + g2;
+  var discriminant = Math.sqrt(r2 * (f2 + g2) - tmp);
+
+  // no intersection
+  if (isNaN(discriminant)) {
+    return [];
+  }
+
+  discriminant /= den;
+
+  var num = f * (vec.x - x0) + g * (vec.y - y0);
+  var t1 = num/den + discriminant;
+  var t2 = num/den - discriminant;
+
+  v1 = new Vec2(x0 + t1*f, y0 + t1*g);
+  v2 = new Vec2(x0 + t2*f, y0 + t2*g);
+
+  var ret = [v1];
+  if (!v1.equal(v2)) {
+    ret.push(v2);
+  }
+
+  return ret;
 };
 
 Line2.prototype.solveForX = function(y) {
