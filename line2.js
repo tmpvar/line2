@@ -154,28 +154,141 @@ Line2.prototype.createPerpendicular = function(vec) {
 
 Line2.prototype.intersectCircle = function(vec, radius) {
 
-  var m = this.slope();
-  var b = this.yintercept();
+  var closest = this.closestPointTo(vec);
+  var l2 = closest.subtract(vec, true).lengthSquared();
+  var r2 = radius*radius;
 
-  var h = vec.x;
-  var k = vec.y;
-  var r = radius;
+  if (l2 > r2) {
+    return [];
+  } else if (l2 < r2) {
+    var v1, v2, equal = closest.equal(vec);
 
-  var B = b-k;
-  var a = m*b+1;
-  var b = -2*h + 2*B*m;
-  var c = (B*B) + (h*h) - r*r;
-  var det = Math.sqrt(b*b - 4*a*c);
-  var den = 2*a;
+    if (equal && this.isHorizontal()) {
+      v1 = vec.add(new Vec2(radius, 0), true);
+      v2 = vec.add(new Vec2(-radius, 0), true);
+    } else if (equal && this.isVertical()) {
+      v1 = vec.add(new Vec2(0, radius), true);
+      v2 = vec.add(new Vec2(0, -radius), true);
+    } else {
 
-  var x = (-b + det) / den;
-  var x2 = (-b - det) / den;
+      // TODO: what happens when y-intercept is null?
+      var x0 = 0;
+      var y0 = this.yintercept();
 
-  return [
-    Vec2(x, this.solveForY(x)),
-    Vec2(x2, this.solveForY(x2)),
-  ];
+      // TODO: use lines relative to the circle
+      var x1 = -5000;
+      var y1 = this.solveForY(x1);
+      var x2 = 5000;
+      var y2 = this.solveForY(x2);
+      var r = radius;
+
+      var dx = x2 - x1;
+      var dy = y2 - y1;
+      var dr = Math.sqrt(dx*dx + dy*dy);
+
+      var D = x1*y2 - x2*y1;
+      var sgn = (dy < 0) ? -1 : 1;
+
+      var discriminant = Math.sqrt(r*r * dr * dr - D*D);
+      v1 = new Vec2(
+        (D * dy + (-dx) * discriminant) / (dr * dr),
+        (-D * dx - Math.abs(dy) * discriminant) / (dr * dr)
+      );
+
+      v2 = Vec2(
+        (D * dy - (-dx) * discriminant) / (dr * dr),
+        (-D * dx + Math.abs(dy) * discriminant) / (dr * dr)
+      );
+    }
+
+    return [v1, v2];
+  } else if (r2 === l2) {
+    return [closest];
+  }
 };
+
+/*Line2.prototype.intersectCircle = function(vec, radius) {
+
+  var closest = this.closestPointTo(vec);
+  var l2 = closest.subtract(vec, true).lengthSquared();
+  var r2 = radius*radius;
+
+  if (l2 > r2) {
+    return [];
+  }
+
+  if (l2 < r2) {
+    var v1, v2, equal = closest.equal(vec);
+
+    if (equal && this.isHorizontal()) {
+      v1 = vec.add(new Vec2(radius, 0), true);
+      v2 = vec.add(new Vec2(-radius, 0), true);
+    } else if (equal && this.isVertical()) {
+      v1 = vec.add(new Vec2(0, radius), true);
+      v2 = vec.add(new Vec2(0, -radius), true);
+    } else {
+
+      / *
+        o line:   y = mx + b
+        o circle: (x - h)^2 + (y - k)^2 = r^2
+          (x - h)^2 + (mx + b - k)^2 = r^2
+        o solve for knowns
+          B = b-k;
+        o expand
+          (x - h)*(x - h) + (mx + B)*(mx + B) = r^2
+        o foil
+          (x^2 - xh - xh + h^2) + (2mx^2 + mxB + mxB + B^2) = r^2
+        o reduce
+          (x^2 - 2xh + h^2) + (2mx^2 + 2mxB + B^2) = r^2
+        o reduce
+          (- 2xh + h^2) + (2mxB + B^2) = r^2
+        o final
+          x^2(2m + 2) + x(-2h+2mB) + (h^2 + B^2 - r^2)
+
+           (      a      )        (   b   )      (     c           )
+                  |                   |                |
+                   \_________________/________________/
+                           |
+        what we care about ^
+
+        x^2(2 * 1) + x(-2 * 50 + 2 * 1 * -50) + (50*50 + -50*50 - 10*10)
+
+      * /
+      var m = this.slope();
+      var yi = this.yintercept();
+
+      var h = vec.x;
+      var k = vec.y;
+
+      var B = yi-k;
+
+      var a = m*B+1;
+      // var b = -2*h + 2*B*m;
+      // var c = (B*B) + (h*h) - r*r;
+
+      //var a = (2 * m * b) + 2;
+      var b = (-2 * h) + (2 * m * B);
+      var c = (h*h) + (B*B) - r2;
+
+console.log('c(%d)=%d*%d + %d*%d - %d', c, h, h, B, B, r2);
+console.log('SQRT', b*b - 4*a*c, 'b*b', b*b, '-', 4*a*c);
+      var det = Math.sqrt(b*b - 4*a*c);
+      var den = 2*a;
+console.log(a,b,c);
+      var x = (-b + det) / den;
+      var x2 = (-b - det) / den;
+
+      v1 = Vec2(x, this.solveForY(x));
+      v2 = Vec2(x2, this.solveForY(x2));
+    }
+
+    return [v1, v2];
+
+  // tangent
+  } else if (l2 === r2) {
+    return [closest];
+  }
+};*/
 
 var det = function(x1, y1, x2, y2) {
   return x1*y2 - y1*x2;
