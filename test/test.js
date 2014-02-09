@@ -305,25 +305,24 @@ describe('line2', function() {
 
 
     it('returns an array of vec2s at intersection point (vertical)', function() {
-      var l = Line2(80, 0, 100, 100);
-      var r = l.intersectCircle(Vec2(99, 50), 100);
-console.log(r, l.isVertical(), l.isHorizontal());
+      var l = Line2(100, 0, 100, 100);
+      var r = l.intersectCircle(Vec2(100, 50), 100);
+
       ok(r.length === 2);
       r.sort(function(a, b) {
         return a.y > b.y ? -1 : 1;
       });
-console.log(r);
-      ok(r[0].equal(100, 72.9129));
-      ok(r[1].equal(100, 27.0871));
+
+      ok(r[0].equal(100, 150));
+      ok(r[1].equal(100, -50));
     });
-/*
+
     it('returns a single item array when tangent', function() {
       var l = Line2(0, 100, 100, 100);
       var r = l.intersectCircle(Vec2(50, 50), 50);
       ok(r.length === 1);
       ok(r[0].equal(50, 100));
     });
-
 
     it('returns an array of vec2s at intersection point (vertical)', function() {
       var l = Line2(0, 0, 100, 0);
@@ -334,37 +333,34 @@ console.log(r);
     it('returns an array of vec2s at intersection point (diagonal)', function() {
       var l = Line2(0, 0, 100, 100);
       var r = l.intersectCircle(Vec2(50, 50), 10);
+
       ok(r.length === 2);
       ok(r[0].equal(40,40));
       ok(r[1].equal(60,60));
     });
 
-    it('returns false when no intersection (diagonal)', function() {
+    it('returns [] when no intersection (diagonal)', function() {
       var l = Line2(0, 0, 100, 100);
       var r = l.intersectCircle(Vec2(50, 0), 10);
-      ok(r === false);
+      ok(!r.length);
     });
 
-    it('returns false when no intersection (vertical)', function() {
+    it('returns []] when no intersection (vertical)', function() {
       var l = Line2(100, 0, 100, 100);
       var r = l.intersectCircle(Vec2(50, 0), 10);
-      ok(r === false);
+      ok(!r.length);
     });
 
-    it('returns false when no intersection (horizontal)', function() {
+    it('returns [] when no intersection (horizontal)', function() {
       var l = Line2(0, 100, 100, 100);
       var r = l.intersectCircle(Vec2(50, 0), 10);
-      ok(r === false);
+      ok(!r.length);
     });
 
-    it('returns false when no intersection (horizontal)', function() {
+    it('returns [] when no intersection (horizontal)', function() {
       var l = Line2(0, 100, 100, 100);
       var r = l.intersectCircle(Vec2(50, 0), 10);
-      ok(r === false);
-
-      ok(r[0].equal(40, 50))
-      ok(r[1].equal(60, 50))
+      ok(!r.length);
     });
-  */
   });
 });
