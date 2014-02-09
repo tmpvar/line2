@@ -40,7 +40,7 @@ when `x` is passed it will set the x-intercept of this line
 
 __slope([slope])__
 
-return the computed slope. 
+return the computed slope.
 
 When `slope` is passed it will set the slope of this line
 
@@ -60,11 +60,13 @@ returns a new line instance that is perpendicular to this line and goes through 
 
 __intersectCircle(vec2, radius)__
 
-returns an array of `Vec2`s which represent the intersections. 
+returns an array of `Vec2`s which represent the intersections.
 
-* 0 means no intersections
-* 1 means the line is tangent to the provided circle
-* 2 means the line fully intersects
+a length of:
+
+* `0` means no intersections
+* `1` means the line is tangent to the provided circle
+* `2` means the line fully intersects
 
 __solveForX(y)__
 
@@ -72,7 +74,7 @@ return the `x` coordinate using the provided `y`
 
 __solveForY(x)__
 
-return the `y` coordinate using the provided `x` 
+return the `y` coordinate using the provided `x`
 
 __intersect(line2)__ or __intersect(x1, y1, x2, y2)__
 

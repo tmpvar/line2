@@ -1,7 +1,8 @@
 {
   "name": "line2",
   "version": "0.1.0",
-  "description": "",
+  "description": "perform operations on infinite lines in 2 dimensions",
+  "keywords" : ["line", "2d", "geometry", "infinite"],
   "main": "line2.js",
   "repository": {
     "type": "git",
