@@ -19,6 +19,10 @@ var finite = function(a) {
   return a !== Infinity && a !== -Infinity;
 };
 
+var det = function(x1, y1, x2, y2) {
+  return x1*y2 - y1*x2;
+};
+
 function Line2(slope, yintercept, x2, y2) {
 
   if (!(this instanceof Line2)) {
@@ -171,127 +175,48 @@ Line2.prototype.intersectCircle = function(vec, radius) {
       v2 = vec.add(new Vec2(0, -radius), true);
     } else {
 
-      // TODO: what happens when y-intercept is null?
-      var x0 = 0;
-      var y0 = this.yintercept();
+      var slope = this.slope(),
+          yintercept = this.yintercept(),
+          f, g;
 
-      // TODO: use lines relative to the circle
-      var x1 = -5000;
-      var y1 = this.solveForY(x1);
-      var x2 = 5000;
-      var y2 = this.solveForY(x2);
-      var r = radius;
+      if (this.isHorizontal()) {
+        f = 1;
+        g = 0;
+      } else if (this.isVertical()) {
+        slope = radius;
+        yintercept = r2;
+        f = 0;
+        g = slope;
+      } else {
+        f = 1/slope;
+        g = 1
+      }
 
-      var dx = x2 - x1;
-      var dy = y2 - y1;
-      var dr = Math.sqrt(dx*dx + dy*dy);
+      var x0 = (this.isVertical()) ? this.xintercept() : 1;
+      var y0 = yintercept + slope;
+      var f2 = f*f;
+      var g2 = g*g;
 
-      var D = x1*y2 - x2*y1;
-      var sgn = (dy < 0) ? -1 : 1;
+      var tmp = f * (vec.y - y0) - g * (vec.x - x0);
+      var discriminant = Math.sqrt(r2 * (f2 + g2) - (tmp*tmp));
 
-      var discriminant = Math.sqrt(r*r * dr * dr - D*D);
-      v1 = new Vec2(
-        (D * dy + (-dx) * discriminant) / (dr * dr),
-        (-D * dx - Math.abs(dy) * discriminant) / (dr * dr)
-      );
+      if (isNaN(discriminant)) {
+        discriminant = 0;
+      }
 
-      v2 = Vec2(
-        (D * dy - (-dx) * discriminant) / (dr * dr),
-        (-D * dx + Math.abs(dy) * discriminant) / (dr * dr)
-      );
+      var first = f * (vec.x - x0) + g * (vec.y - y0);
+      var den = f2 + g2;
+      var t1 = (first + discriminant)/den;
+      var t2 = (first - discriminant)/den;
+
+      v1 = new Vec2(x0 + t1*f, y0 + t1*g);
+      v2 = new Vec2(x0 + t2*f, y0 + t2*g);
     }
 
     return [v1, v2];
   } else if (r2 === l2) {
     return [closest];
   }
-};
-
-/*Line2.prototype.intersectCircle = function(vec, radius) {
-
-  var closest = this.closestPointTo(vec);
-  var l2 = closest.subtract(vec, true).lengthSquared();
-  var r2 = radius*radius;
-
-  if (l2 > r2) {
-    return [];
-  }
-
-  if (l2 < r2) {
-    var v1, v2, equal = closest.equal(vec);
-
-    if (equal && this.isHorizontal()) {
-      v1 = vec.add(new Vec2(radius, 0), true);
-      v2 = vec.add(new Vec2(-radius, 0), true);
-    } else if (equal && this.isVertical()) {
-      v1 = vec.add(new Vec2(0, radius), true);
-      v2 = vec.add(new Vec2(0, -radius), true);
-    } else {
-
-      / *
-        o line:   y = mx + b
-        o circle: (x - h)^2 + (y - k)^2 = r^2
-          (x - h)^2 + (mx + b - k)^2 = r^2
-        o solve for knowns
-          B = b-k;
-        o expand
-          (x - h)*(x - h) + (mx + B)*(mx + B) = r^2
-        o foil
-          (x^2 - xh - xh + h^2) + (2mx^2 + mxB + mxB + B^2) = r^2
-        o reduce
-          (x^2 - 2xh + h^2) + (2mx^2 + 2mxB + B^2) = r^2
-        o reduce
-          (- 2xh + h^2) + (2mxB + B^2) = r^2
-        o final
-          x^2(2m + 2) + x(-2h+2mB) + (h^2 + B^2 - r^2)
-
-           (      a      )        (   b   )      (     c           )
-                  |                   |                |
-                   \_________________/________________/
-                           |
-        what we care about ^
-
-        x^2(2 * 1) + x(-2 * 50 + 2 * 1 * -50) + (50*50 + -50*50 - 10*10)
-
-      * /
-      var m = this.slope();
-      var yi = this.yintercept();
-
-      var h = vec.x;
-      var k = vec.y;
-
-      var B = yi-k;
-
-      var a = m*B+1;
-      // var b = -2*h + 2*B*m;
-      // var c = (B*B) + (h*h) - r*r;
-
-      //var a = (2 * m * b) + 2;
-      var b = (-2 * h) + (2 * m * B);
-      var c = (h*h) + (B*B) - r2;
-
-console.log('c(%d)=%d*%d + %d*%d - %d', c, h, h, B, B, r2);
-console.log('SQRT', b*b - 4*a*c, 'b*b', b*b, '-', 4*a*c);
-      var det = Math.sqrt(b*b - 4*a*c);
-      var den = 2*a;
-console.log(a,b,c);
-      var x = (-b + det) / den;
-      var x2 = (-b - det) / den;
-
-      v1 = Vec2(x, this.solveForY(x));
-      v2 = Vec2(x2, this.solveForY(x2));
-    }
-
-    return [v1, v2];
-
-  // tangent
-  } else if (l2 === r2) {
-    return [closest];
-  }
-};*/
-
-var det = function(x1, y1, x2, y2) {
-  return x1*y2 - y1*x2;
 };
 
 Line2.prototype.solveForX = function(y) {

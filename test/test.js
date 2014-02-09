@@ -86,8 +86,6 @@ describe('line2', function() {
 
     it('finds the closest point to this line (diagonal)', function() {
       var l = Line2.fromPoints(0, 0, 100, 100);
-      console.log('closest point', l.closestPointTo(Vec2(25, 75)));
-
       ok(l.closestPointTo(Vec2(25, 75)).equal(Vec2(50, 50)));
     });
 
@@ -263,7 +261,7 @@ describe('line2', function() {
     it('should return a perpendicular line (vertical)', function() {
       var l = Line2(10, 0, 10, 10);
       var l2 = l.createPerpendicular(Vec2(10,5));
-      console.log(l2, l2.slope())
+
       ok(l2.yintercept() === 5);
       ok(l2.slope() === 0);
     });
@@ -271,14 +269,14 @@ describe('line2', function() {
     it('should return a perpendicular line (horizontal)', function() {
       var l = Line2(0, 10, 10, 10);
       var l2 = l.createPerpendicular(Vec2(5, 10));
-      console.log(l2, l2.slope() === null)
+
       ok(l2.xintercept() === 5);
       ok(l2.slope() === Infinity);
     });
   });
 
   describe('#intersectCircle', function() {
-    it('should work', function() {
+    it('should work from origin', function() {
       var l = new Line2(2, 2);
 
       var r = l.intersectCircle(Vec2(0, 0), 10);
@@ -287,8 +285,8 @@ describe('line2', function() {
         return a.y > b.y ? -1 : 1;
       });
 
-      r[0].equal(3.65421149, 9.30842298);
-      r[1].equal(-5.25421149, -8.50842298);
+      ok(r[0].equal(3.65421149, 9.30842298));
+      ok(r[1].equal(-5.25421149, -8.50842298));
     });
 
     it('returns an array of vec2s at intersection point (vertical on line)', function() {
@@ -303,8 +301,7 @@ describe('line2', function() {
       ok(r[1].equal(100, -5));
     });
 
-
-    it('returns an array of vec2s at intersection point (vertical)', function() {
+    it('returns an array of vec2s at intersection point (vertical on circle center)', function() {
       var l = Line2(100, 0, 100, 100);
       var r = l.intersectCircle(Vec2(100, 50), 100);
 
@@ -320,14 +317,18 @@ describe('line2', function() {
     it('returns a single item array when tangent', function() {
       var l = Line2(0, 100, 100, 100);
       var r = l.intersectCircle(Vec2(50, 50), 50);
+
       ok(r.length === 1);
       ok(r[0].equal(50, 100));
     });
 
-    it('returns an array of vec2s at intersection point (vertical)', function() {
+    it('returns an array of vec2s at intersection point (horizontal)', function() {
       var l = Line2(0, 0, 100, 0);
       var r = l.intersectCircle(Vec2(50, 50), 55);
+
       ok(r.length === 2);
+      ok(r[0].equal(72.91287847, 0));
+      ok(r[1].equal(27.08712153, 0));
     });
 
     it('returns an array of vec2s at intersection point (diagonal)', function() {
@@ -335,17 +336,19 @@ describe('line2', function() {
       var r = l.intersectCircle(Vec2(50, 50), 10);
 
       ok(r.length === 2);
-      ok(r[0].equal(40,40));
-      ok(r[1].equal(60,60));
+      ok(r[0].equal(57.07106781, 57.07106781));
+      ok(r[1].equal(42.92893219, 42.92893219));
     });
+
 
     it('returns [] when no intersection (diagonal)', function() {
       var l = Line2(0, 0, 100, 100);
       var r = l.intersectCircle(Vec2(50, 0), 10);
+
       ok(!r.length);
     });
 
-    it('returns []] when no intersection (vertical)', function() {
+    it('returns [] when no intersection (vertical)', function() {
       var l = Line2(100, 0, 100, 100);
       var r = l.intersectCircle(Vec2(50, 0), 10);
       ok(!r.length);
@@ -361,6 +364,15 @@ describe('line2', function() {
       var l = Line2(0, 100, 100, 100);
       var r = l.intersectCircle(Vec2(50, 0), 10);
       ok(!r.length);
+    });
+
+    it('returns an array of vec2s at intersection point (vertical off circle)', function() {
+      var l = Line2(100, 0, 100, 100);
+      var r = l.intersectCircle(Vec2(120, 50), 100);
+
+      ok(r.length === 2);
+      ok(r[0].equal(100, 147.97958971));
+      ok(r[1].equal(100, -47.97958971));
     });
   });
 });
