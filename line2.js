@@ -361,5 +361,5 @@ if (typeof module !== "undefined" && typeof module.exports == "object") {
 }
 
 if (typeof window !== "undefined") {
-  window.line2 = window.line2 || line2;
+  window.Line2 = window.Line2 || Line2;
 }
