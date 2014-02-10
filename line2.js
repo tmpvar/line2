@@ -102,7 +102,7 @@ Line2.prototype.intersectSegment = function(x1, y1, x2, y2) {
   // diagonal
   } else {
     if (dy/dx === this.slope()) {
-      return y1 === this.slope() * x1 + this.yintercept()
+      return y1 === this.solveForY(x1);
     }
   }
 
@@ -130,8 +130,8 @@ Line2.prototype.intersectSegment = function(x1, y1, x2, y2) {
 
     isect = segseg(x, ly1, x, ly2, x1, y1, x2, y2);
   } else {
-    ly1 = this.slope() * lx1 + this.yintercept();
-    ly2 = this.slope() * lx2 + this.yintercept();
+    ly1 = this.solveForY(lx1);
+    ly2 = this.solveForY(lx2);
     isect = segseg(lx1, ly1, lx2, ly2, x1, y1, x2, y2);
   }
 
@@ -351,7 +351,7 @@ Line2.prototype.containsPoint = function(vec, y) {
   } else if (this.isVertical()) {
     return x === this.xintercept();
   } else {
-    return y === this.slope() * x + this.yintercept();
+    return y === this.solveForY(x);
   }
 };
 
