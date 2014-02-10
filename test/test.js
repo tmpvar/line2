@@ -20,6 +20,164 @@ describe('line2', function() {
     });
   });
 
+  describe('#change', function() {
+    it('returns the callback', function() {
+      var l = new Line2();
+      var fn = function() {};
+      ok(l.change(fn) === fn);
+    });
+
+    it('should notify the caller', function() {
+      var l = new Line2(0, 0, 100, 100);
+      var count = 0;
+
+      l.change(function(line) {
+        ok(line === l);
+        count++;
+      });
+
+      l.slope(1/4);
+      l.yintercept(5);
+      l.xintercept(1);
+
+      ok(count === 3);
+    });
+  });
+
+  describe('#ignore', function() {
+    it('removes the passed listener', function() {
+      var l = new Line2();
+      var count = 0;
+      var fn = l.change(function() { count++; });
+      var fn2 = l.change(function() { count++; });
+
+      l.ignore(fn);
+      l.slope(1.2);
+
+      ok(count === 1);
+    });
+
+    it('removes all listeners if no callback is specified', function() {
+      var l = new Line2();
+      var count = 0;
+      var fn = l.change(function() { count++; });
+      var fn2 = l.change(function() { count++; });
+
+      l.ignore();
+      l.slope(1.2);
+
+      ok(count === 0);
+    });
+  });
+
+  describe('#notify', function() {
+    it('calls all of the registered listeners', function() {
+      var l = new Line2();
+      var count = '';
+      var fn = l.change(function(line) {
+        ok(line === l);
+        count += 'f';
+      });
+      var fn2 = l.change(function(line) {
+        ok(line === l);
+        count += 'l';
+      });
+
+      l.notify();
+      ok(count === 'fl');
+    });
+  });
+
+  describe('#yintercept', function() {
+    it('acts as a getter', function() {
+      var l = new Line2(0, 2, 100, 100);
+      ok(l.yintercept() === 2);
+    });
+
+    it('acts as a setter', function() {
+      var l = new Line2(0, 2, 100, 100);
+      l.yintercept(4);
+      ok(l.yintercept() === 4);
+    });
+
+    it('acts as a setter and updates xintercept', function() {
+      var l = new Line2(0, 2, 20, 22);
+      l.yintercept(4);
+      ok(l.yintercept() === 4);
+      console.log(l.xintercept(), l.slope());
+      ok(l.xintercept() === -4);
+    });
+
+    it('acts as a setter and updates xintercept (horizontal)', function() {
+      var l = new Line2(0, 100, 100, 100);
+      l.yintercept(4);
+      ok(l.yintercept() === 4);
+      ok(l.xintercept() === null);
+    });
+
+    it('does not notify when set to the same value', function() {
+      var l = new Line2(0, 100, 100, 100);
+      var c = 0;
+      l.change(function() { c++; });
+
+      l.yintercept(100);
+      ok(l.yintercept() === 100);
+      ok(c === 0);
+    });
+  });
+
+  describe('#xintercept', function() {
+    it('acts as a getter', function() {
+      var l = new Line2(0, 2, 20, 22);
+      console.log(l.xintercept());
+      ok(l.xintercept() === -2);
+    });
+
+    it('acts as a setter', function() {
+      var l = new Line2(0, 2, 20, 22);
+      l.xintercept(4);
+      ok(l.xintercept() === 4);
+    });
+
+    it('acts as a setter and updates yintercept', function() {
+      var l = new Line2(3, 5);
+
+      l.xintercept(2);
+
+      ok(l.yintercept() === -6);
+      ok(l.xintercept() === 2);
+    });
+
+    it('acts as a setter and updates yintercept', function() {
+      var l = new Line2(0, 2, 20, 22);
+
+      l.xintercept(4);
+
+      ok(l.yintercept() === -4);
+      ok(l.xintercept() === 4);
+    });
+
+    it('acts as a setter and updates xintercept (vertical)', function() {
+      var l = new Line2(100, 0, 100, 100);
+      l.xintercept(4);
+      ok(l.xintercept() === 4);
+      ok(l.yintercept() === null);
+    });
+
+    it('does not notify when set to the same value', function() {
+      var l = new Line2(0, 0, 100, 100);
+      var c = 0;
+      l.change(function() { c++; });
+
+      l.xintercept(0);
+
+      ok(l.xintercept() === 0);
+      ok(c === 0);
+    });
+  });
+
+
+
   describe('#fromPoints', function() {
     it('computes the slope and yintercept', function() {
       [
@@ -36,7 +194,7 @@ describe('line2', function() {
       var l = Line2.fromPoints(100, 0, 100, 100);
       ok(l.slope() === Infinity);
       ok(l.xintercept() === 100);
-      ok(l.isVertical())
+      ok(l.isVertical());
       ok(!l.isHorizontal());
     });
 
@@ -44,8 +202,8 @@ describe('line2', function() {
       var l = Line2.fromPoints(0, 100, 100, 100);
       ok(l.slope() === 0);
       ok(l.yintercept() === 100);
-      ok(!l.isVertical())
-      ok(l.isHorizontal())
+      ok(!l.isVertical());
+      ok(l.isHorizontal());
     });
 
     it('computes the slope and yintercept (diagonal)', function() {
@@ -58,7 +216,7 @@ describe('line2', function() {
 
     it('computes the slope and yintercept (diagonal)', function() {
       var l = Line2.fromPoints(8, 2, 80, 20);
-      ok(l.slope() === .25);
+      ok(l.slope() === 0.25);
       ok(l.yintercept() === 0);
       ok(!l.isVertical());
       ok(!l.isHorizontal());

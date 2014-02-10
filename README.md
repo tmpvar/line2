@@ -14,7 +14,7 @@ var Line = require('line2');
 
 var l = new Line(0, 0, 10, 10);
 
-console.log(l.slope(), l.yintercept()); // 1 0
+console.log(l.slope(), l.yintercept(), l.xintercept()); // 1 0 0
 
 ```
 
@@ -25,18 +25,31 @@ __Line2(x1, y1, x2, y2)__ or __Line2(slope, yIntercept)__
 
 returns a new `Line2`
 
+__change(fn)__
+
+add an observer that will be notified of any change.
+
+_callback signature_: `function(line) {}`
+
+__ignore([fn])__
+
+Removes a listener, if no `fn` is passed remove them all.
+
+__notify()__
+
+Call all of the listeners, manually.
 
 __yintercept([y])__
 
-return the computed y-intercept or `null`
+return the computed y-intercept or `null` if verical
 
-When `y` is passed it will set the y-intercept of this line
+When `y` is passed it will set the y-intercept of this line and the x-intercept if appropriate (not horizontal)
 
 __xintercept([x])__
 
-return the computed x-intercept or `null`
+return the computed x-intercept or `null` if horizontal
 
-when `x` is passed it will set the x-intercept of this line
+when `x` is passed it will set the x-intercept of this line and the y-intercept if appropriate (not vertical)
 
 __slope([slope])__
 
