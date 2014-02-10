@@ -104,7 +104,6 @@ describe('line2', function() {
       var l = new Line2(0, 2, 20, 22);
       l.yintercept(4);
       ok(l.yintercept() === 4);
-      console.log(l.xintercept(), l.slope());
       ok(l.xintercept() === -4);
     });
 
@@ -126,10 +125,30 @@ describe('line2', function() {
     });
   });
 
+  describe('#slope', function() {
+    it('updates the x-intercept', function() {
+      var l = new Line2(1, 10);
+      ok(l.xintercept() === -10);
+      l.slope(-1);
+      ok(l.xintercept() === 10);
+    });
+
+    it('does not notify if changed to the same value', function() {
+      var l = new Line2(1, 10);
+      var c = 0;
+      l.change(function() { c++; });
+
+      l.slope(1);
+
+      ok(c === 0);
+    });
+
+  });
+
+
   describe('#xintercept', function() {
     it('acts as a getter', function() {
       var l = new Line2(0, 2, 20, 22);
-      console.log(l.xintercept());
       ok(l.xintercept() === -2);
     });
 

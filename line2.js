@@ -43,7 +43,13 @@ function Line2(slope, yintercept, x2, y2) {
       this.yintercept(yintercept);
     }
   }
+
+
 }
+
+Line2.prototype._yintercept = null;
+Line2.prototype._xintercept = null;
+Line2.prototype._slope = null;
 
 Line2.prototype.change = function(fn) {
   if (typeof fn === 'function') {
@@ -116,8 +122,15 @@ Line2.prototype.slope = function(val) {
       val = Vec2.clean(val);
     }
 
-    this._slope = val;
-    this.notify();
+    if (this._slope !== val) {
+      var old = this._slope;
+      this._slope = val;
+
+      if (old !== null) {
+        this._xintercept = this.solveForX(0);
+      }
+      this.notify();
+    }
   }
   return definedOr(this._slope, null);
 };
