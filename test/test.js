@@ -133,6 +133,12 @@ describe('line2', function() {
       ok(l.xintercept() === 10);
     });
 
+    it('does not update the x-intercept (horizontal)', function() {
+      var l = new Line2(1, 10);
+      l.slope(0);
+      ok(l.xintercept() === null);
+    });
+
     it('does not notify if changed to the same value', function() {
       var l = new Line2(1, 10);
       var c = 0;

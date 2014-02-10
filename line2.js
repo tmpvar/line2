@@ -127,7 +127,12 @@ Line2.prototype.slope = function(val) {
       this._slope = val;
 
       if (old !== null) {
-        this._xintercept = this.solveForX(0);
+        var x = this.solveForX(0);
+        if (!finite(x)) {
+          x = null;
+        }
+
+        this._xintercept = x;
       }
       this.notify();
     }
