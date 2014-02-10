@@ -1,6 +1,6 @@
 {
   "name": "line2",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "perform operations on infinite lines in 2 dimensions",
   "keywords" : ["line", "2d", "geometry", "infinite"],
   "main": "line2.js",
@@ -20,7 +20,7 @@
   "scripts": {
     "test": "node_modules/mocha/bin/mocha test/test.js -R spec",
     "cover": "istanbul cover _mocha -- test/test.js -R spec",
-    "minify": "browserify -e line2.js | uglifyjs > line2.js.min.js"
+    "minify": "browserify -e line2.js | uglifyjs > line2.min.js"
   },
   "dependencies": {
     "vec2": "~1.3.4",
