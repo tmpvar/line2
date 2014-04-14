@@ -322,6 +322,11 @@ describe('line2', function() {
       ok(l1.intersect(5, 5, 5, -5).equal(5, 0));
     });
 
+    it('returns a vec2 when intersected with a segment (horizontal - diagonal)', function() {
+      var l1 = Line2(0, 0, 100, 0);
+      ok(l1.intersect(50, 10, 30, -10).equal(40, 0));
+    });
+
     it('returns false when no intersection (horizontal)', function() {
       var l1 = Line2(0, 0, 100, 0);
       ok(!l1.intersect(5, 5, 5, 1));
