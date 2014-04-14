@@ -310,6 +310,20 @@ describe('line2', function() {
       ok(l2.intersect(l1).equal(5, 0));
     });
 
+    it('finds intersection of lines (horizontal - diagonal)', function() {
+      var l1 = Line2.fromPoints(-100, -110, -101, -110);
+      var l2 = Line2.fromPoints(92.92893219, -107.07106781, 92.22182541, -106.36396103);
+      console.log(l1.intersect(l2));
+      ok(l1.intersect(l2).equal(95.85786438, -110));
+    });
+
+    it('finds intersection of lines (horizontal - diagonal)', function() {
+      var l2 = Line2.fromPoints(-100, -110, -101, -110);
+      var l1 = Line2.fromPoints(92.92893219, -107.07106781, 92.22182541, -106.36396103);
+      console.log(l1.intersect(l2));
+      ok(l1.intersect(l2).equal(95.85786438, -110));
+    });
+
     it('finds the intersection of lines (vertial-diagonal)', function() {
       var l1 = Line2.fromPoints(0, 0, 55, 25);
       var l2 = Line2.fromPoints(30, 30, 30, 0);
