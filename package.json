@@ -2,7 +2,12 @@
   "name": "line2",
   "version": "0.2.1",
   "description": "perform operations on infinite lines in 2 dimensions",
-  "keywords" : ["line", "2d", "geometry", "infinite"],
+  "keywords": [
+    "line",
+    "2d",
+    "geometry",
+    "infinite"
+  ],
   "main": "line2.js",
   "repository": {
     "type": "git",
@@ -14,12 +19,10 @@
     "url": "https://github.com/tmpvar/line2/issues"
   },
   "devDependencies": {
-    "mocha": "1.x",
-    "istanbul": "*"
+    "tape": "^3.4.0"
   },
   "scripts": {
-    "test": "node_modules/mocha/bin/mocha test/test.js -R spec",
-    "cover": "istanbul cover _mocha -- test/test.js -R spec",
+    "test": "tape test/test.js",
     "minify": "browserify -e line2.js | uglifyjs > line2.min.js"
   },
   "dependencies": {

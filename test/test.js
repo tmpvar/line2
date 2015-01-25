@@ -1,3 +1,5 @@
+var test = require('tape');
+
 if (typeof require !== "undefined") {
   var Line2 = require("../line2.js");
   var Vec2 = require("vec2");
@@ -5,576 +7,615 @@ if (typeof require !== "undefined") {
 
 var ok = function(a, msg) { if (!a) throw new Error(msg || "not ok"); };
 
-describe('line2', function() {
-  describe('#ctor', function() {
-    it('accepts slope/yintercept', function() {
-      var l = new Line2(1, 0);
-      ok(l.slope() === 1);
-      ok(l.yintercept() === 0);
-    });
+test('ctor - accepts slope/yintercept', function(t) {
+  var l = new Line2(1, 0);
+  t.equal(l.slope(), 1);
+  t.equal(l.yintercept(), 0);
+  t.end();
+});
 
-    it('accepts 4 points', function() {
-      var l = new Line2(0, 0, 10, 10);
-      ok(l.slope() === 1);
-      ok(l.yintercept() === 0);
-    });
+test('ctor - accepts 4 points', function(t) {
+  var l = new Line2(0, 0, 10, 10);
+  t.equal(l.slope(), 1);
+  t.equal(l.yintercept(), 0);
+  t.end();
+});
+
+test('change - returns the callback', function(t) {
+  var l = new Line2();
+  var fn = function(t) {};
+  t.equal(l.change(fn), fn);
+  t.end();
+});
+
+test('change - should notify the caller', function(t) {
+  var l = new Line2(0, 0, 100, 100);
+  var count = 0;
+
+  l.change(function(line) {
+    t.equal(line, l);
+    count++;
   });
 
-  describe('#change', function() {
-    it('returns the callback', function() {
-      var l = new Line2();
-      var fn = function() {};
-      ok(l.change(fn) === fn);
-    });
+  l.slope(1/4);
+  l.yintercept(5);
+  l.xintercept(1);
 
-    it('should notify the caller', function() {
-      var l = new Line2(0, 0, 100, 100);
-      var count = 0;
+  t.equal(count, 3);
+  t.end();
+});
 
-      l.change(function(line) {
-        ok(line === l);
-        count++;
-      });
 
-      l.slope(1/4);
-      l.yintercept(5);
-      l.xintercept(1);
+test('ignore - removes the passed listener', function(t) {
+  var l = new Line2();
+  var count = 0;
+  var fn = l.change(function(t) { count++; });
+  var fn2 = l.change(function(t) { count++; });
 
-      ok(count === 3);
-    });
+  l.ignore(fn);
+  l.slope(1.2);
+
+  t.equal(count, 1);
+  t.end();
+});
+
+test('ignore - removes all listeners if no callback is specified', function(t) {
+  var l = new Line2();
+  var count = 0;
+  var fn = l.change(function(t) { count++; });
+  var fn2 = l.change(function(t) { count++; });
+
+  l.ignore();
+  l.slope(1.2);
+
+  t.equal(count, 0);
+  t.end();
+});
+
+test('notify - calls all of the registered listeners', function(t) {
+  var l = new Line2();
+  var count = '';
+  var fn = l.change(function(line) {
+    t.equal(line, l);
+    count += 'f';
+  });
+  var fn2 = l.change(function(line) {
+    t.equal(line, l);
+    count += 'l';
   });
 
-  describe('#ignore', function() {
-    it('removes the passed listener', function() {
-      var l = new Line2();
-      var count = 0;
-      var fn = l.change(function() { count++; });
-      var fn2 = l.change(function() { count++; });
+  l.notify();
+  t.equal(count, 'fl');
+  t.end();
+});
 
-      l.ignore(fn);
-      l.slope(1.2);
+test('yintercept - acts as a getter', function(t) {
+  var l = new Line2(0, 2, 100, 100);
+  t.equal(l.yintercept(), 2);
+  t.end();
+});
 
-      ok(count === 1);
-    });
+test('yintercept - acts as a setter', function(t) {
+  var l = new Line2(0, 2, 100, 100);
+  l.yintercept(4);
+  t.equal(l.yintercept(), 4);
+  t.end()
+});
 
-    it('removes all listeners if no callback is specified', function() {
-      var l = new Line2();
-      var count = 0;
-      var fn = l.change(function() { count++; });
-      var fn2 = l.change(function() { count++; });
+test('yintercept - acts as a setter and updates xintercept', function(t) {
+  var l = new Line2(0, 2, 20, 22);
+  l.yintercept(4);
+  t.equal(l.yintercept(), 4);
+  t.equal(l.xintercept(), -4);
+  t.end();
+});
 
-      l.ignore();
-      l.slope(1.2);
+test('yintercept - acts as a setter and updates xintercept (horizontal)', function(t) {
+  var l = new Line2(0, 100, 100, 100);
+  l.yintercept(4);
+  t.equal(l.yintercept(), 4);
+  t.equal(l.xintercept(), null);
+  t.end();
+});
 
-      ok(count === 0);
-    });
+test('yintercept - does not notify when set to the same value', function(t) {
+  var l = new Line2(0, 100, 100, 100);
+  var c = 0;
+  l.change(function(t) { c++; });
+
+  l.yintercept(100);
+  t.equal(l.yintercept(), 100);
+  t.equal(c, 0);
+  t.end();
+});
+
+test('slope - updates the x-intercept', function(t) {
+  var l = new Line2(1, 10);
+  t.equal(l.xintercept(), -10);
+  l.slope(-1);
+  t.equal(l.xintercept(), 10);
+  t.end();
+});
+
+test('slope - does not update the x-intercept (horizontal)', function(t) {
+  var l = new Line2(1, 10);
+  l.slope(0);
+  t.equal(l.xintercept(), null);
+  t.end();
+});
+
+test('slope - does not notify if changed to the same value', function(t) {
+  var l = new Line2(1, 10);
+  var c = 0;
+  l.change(function(t) { c++; });
+
+  l.slope(1);
+
+  t.equal(c, 0);
+  t.end();
+});
+
+test('xintercept - acts as a getter', function(t) {
+  var l = new Line2(0, 2, 20, 22);
+  t.equal(l.xintercept(), -2);
+  t.end();
+});
+
+test('xintercept - acts as a setter', function(t) {
+  var l = new Line2(0, 2, 20, 22);
+  l.xintercept(4);
+  t.equal(l.xintercept(), 4);
+  t.end();
+});
+
+test('xintercept - acts as a setter and updates yintercept', function(t) {
+  var l = new Line2(3, 5);
+
+  l.xintercept(2);
+
+  t.equal(l.yintercept(), -6);
+  t.equal(l.xintercept(), 2);
+  t.end();
+});
+
+test('xintercept - acts as a setter and updates yintercept', function(t) {
+  var l = new Line2(0, 2, 20, 22);
+
+  l.xintercept(4);
+
+  t.equal(l.yintercept(), -4);
+  t.equal(l.xintercept(), 4);
+  t.end();
+});
+
+test('xintercept - acts as a setter and updates xintercept (vertical)', function(t) {
+  var l = new Line2(100, 0, 100, 100);
+  l.xintercept(4);
+  t.equal(l.xintercept(), 4);
+  t.equal(l.yintercept(), null);
+  t.end();
+});
+
+test('xintercept - does not notify when set to the same value', function(t) {
+  var l = new Line2(0, 0, 100, 100);
+  var c = 0;
+  l.change(function(t) { c++; });
+
+  l.xintercept(0);
+
+  t.equal(l.xintercept(), 0);
+  t.equal(c, 0);
+  t.end();
+});
+
+test('fromPoints - computes the slope and yintercept', function(t) {
+  [
+    Line2.fromPoints([1, 1], [10, 10]),
+    Line2.fromPoints(Vec2(1, 1), Vec2(10, 10)),
+    Line2.fromPoints(1, 1, 10, 10),
+  ].forEach(function(line) {
+    t.equal(line.slope(), 1);
+    t.equal(line.yintercept(), 0);
+  });
+  t.end();
+});
+
+test('fromPoints - computes the slope and yintercept (vertical)', function(t) {
+  var l = Line2.fromPoints(100, 0, 100, 100);
+  t.equal(l.slope(), Infinity);
+  t.equal(l.xintercept(), 100);
+  t.ok(l.isVertical());
+  t.ok(!l.isHorizontal());
+  t.end();
+});
+
+test('fromPoints - computes the slope and yintercept (horizontal)', function(t) {
+  var l = Line2.fromPoints(0, 100, 100, 100);
+  t.equal(l.slope(), 0);
+  t.equal(l.yintercept(), 100);
+  t.ok(!l.isVertical());
+  t.ok(l.isHorizontal());
+  t.end();
+});
+
+test('fromPoints - computes the slope and yintercept (diagonal)', function(t) {
+  var l = Line2.fromPoints(2, 8, 20, 80);
+  t.equal(l.slope(), 4);
+  t.equal(l.yintercept(), 0);
+  t.ok(!l.isVertical());
+  t.ok(!l.isHorizontal());
+  t.end();
+});
+
+test('fromPoints - computes the slope and yintercept (diagonal)', function(t) {
+  var l = Line2.fromPoints(8, 2, 80, 20);
+  t.equal(l.slope(), 0.25);
+  t.equal(l.yintercept(), 0);
+  t.ok(!l.isVertical());
+  t.ok(!l.isHorizontal());
+  t.end();
+});
+
+test('fromPoints - computes the slope and yintercept (diagonal)', function(t) {
+  var l = Line2.fromPoints(2, 0, 20, 18);
+  t.equal(l.slope(), 1);
+  t.equal(l.yintercept(), -2);
+  t.ok(!l.isVertical());
+  t.ok(!l.isHorizontal());
+  t.end();
+});
+
+test('closestPointTo - finds the closest point to this line (horizontal)', function(t) {
+  var l = Line2.fromPoints(0, 0, 100, 0);
+  t.ok(l.closestPointTo(Vec2(10, 10)).equal(Vec2(10, 0)));
+  t.end();
+});
+
+test('closestPointTo - finds the closest point to this line (vertical)', function(t) {
+  var l = Line2.fromPoints(100, 0, 100, 100);
+  t.ok(l.closestPointTo(Vec2(10, 10)).equal(Vec2(100, 10)));
+  t.end();
+});
+
+test('closestPointTo - finds the closest point to this line (diagonal)', function(t) {
+  var l = Line2.fromPoints(0, 0, 100, 100);
+  t.ok(l.closestPointTo(Vec2(25, 75)).equal(Vec2(50, 50)));
+  t.end();
+});
+
+test('closestPointTo - finds the closest point to this line (diagonal)', function(t) {
+  var l = Line2(80, 0, 100, 100);
+  var r = l.closestPointTo(Vec2(99, 50));
+  t.ok(r.equal(90.34615385000001, 51.73076923));
+  t.end();
+});
+
+test('intersect - computes the intersection of normal lines', function(t) {
+  var l1 = Line2.fromPoints(0, 0, 10, 10);
+  var l2 = Line2.fromPoints(0, 10, 10, 0);
+
+  var v = l1.intersect(l2);
+  t.ok(v.equal(5, 5));
+  t.end()
+});
+
+test('intersect - returns false when lines are parallel', function(t) {
+  var l1 = Line2.fromPoints(0, 0, 10, 10);
+  var l2 = Line2.fromPoints(0, 5, 5, 10);
+
+  t.ok(!l1.intersect(l2));
+  t.end();
+});
+
+test('intersect - returns true when lines are collinear', function(t) {
+  var l1 = Line2.fromPoints(0, 0, 10, 10);
+  var l2 = Line2.fromPoints(5, 5, 9, 9);
+  t.equal(l1.intersect(l2), true);
+  t.end();
+});
+
+test('intersect - finds the intersection of perpendicular lines (vertical-vertical)', function(t) {
+  var l1 = Line2.fromPoints(0, 0, 10, 0);
+  var l2 = Line2.fromPoints(5, 10, 5, 0);
+
+  t.ok(l1.intersect(l2).equal(5, 0));
+  t.ok(l2.intersect(l1).equal(5, 0));
+  t.end();
+});
+
+test('intersect - finds intersection of lines (horizontal - diagonal)', function(t) {
+  var l1 = Line2.fromPoints(-100, -110, -101, -110);
+  var l2 = Line2.fromPoints(92.92893219, -107.07106781, 92.22182541, -106.36396103);
+
+  t.ok(l1.intersect(l2).equal(95.85786438, -110));
+  t.end();
+});
+
+test('intersect - finds intersection of lines (horizontal - diagonal)', function(t) {
+  var l2 = Line2.fromPoints(-100, -110, -101, -110);
+  var l1 = Line2.fromPoints(92.92893219, -107.07106781, 92.22182541, -106.36396103);
+  t.ok(l1.intersect(l2).equal(95.85786438, -110));
+  t.end();
+});
+
+test('intersect - finds the intersection of lines (vertial-diagonal)', function(t) {
+  var l1 = Line2.fromPoints(0, 0, 55, 25);
+  var l2 = Line2.fromPoints(30, 30, 30, 0);
+  t.ok(l1.intersect(l2).equal(30, 13.6363635));
+  t.ok(l2.intersect(l1).equal(30, 13.6363635));
+  t.end();
+});
+
+test('returns a vec2 when intersected with a segment (horizontal)', function(t) {
+  var l1 = Line2(0, 0, 100, 0);
+  t.ok(l1.intersect(5, 5, 5, -5).equal(5, 0));
+  t.end();
+});
+
+test('returns a vec2 when intersected with a segment (horizontal - diagonal)', function(t) {
+  var l1 = Line2(0, 0, 100, 0);
+  t.ok(l1.intersect(50, 10, 30, -10).equal(40, 0));
+  t.end();
+});
+
+test('returns false when no intersection (horizontal)', function(t) {
+  var l1 = Line2(0, 0, 100, 0);
+  t.ok(!l1.intersect(5, 5, 5, 1));
+  t.end();
+});
+
+test('returns true when colinear (horizontal)', function(t) {
+  var l1 = Line2(0, 0, 100, 0);
+  t.equal(l1.intersect(0, 0, 5, 0), true);
+  t.end();
+});
+
+test('returns false when parallel (horizontal)', function(t) {
+  var l1 = Line2(0, 0, 100, 0);
+  t.equal(l1.intersect(0, 5, 5, 5), false);
+  t.end();
+});
+
+test('returns true when colinear (vertical)', function(t) {
+  var l1 = Line2(100, 0, 100, 100);
+  t.equal(l1.intersect(100, 10, 100, 50), true);
+  t.end();
+});
+
+test('returns vec2 when intersection (vertical)', function(t) {
+  var l1 = Line2(100, 0, 100, 100);
+  t.ok(l1.intersect(50, 50, 200, 50).equal(100, 50));
+  t.end();
+});
+
+test('returns false when parallel (vertical)', function(t) {
+  var l1 = Line2(100, 0, 100, 100);
+  t.equal(l1.intersect(5, 0, 5, 5), false);
+  t.end();
+});
+
+test('returns a vec2 when intersected with a segment (diagonal)', function(t) {
+  var l1 = Line2(0, 0, 100, 100);
+  t.ok(l1.intersect(25, 75, 75, 25).equal(50, 50));
+  t.end();
+});
+
+test('returns false when no intersection (diagonal)', function(t) {
+  var l1 = Line2(0, 0, 100, 100);
+  t.ok(!l1.intersect(25, 75, 30, 75));
+  t.end();
+});
+
+test('returns true when colinear (diagonal)', function(t) {
+  var l1 = Line2(0, 0, 100, 0);
+  t.equal(l1.intersect(0, 0, 5, 0), true);
+  t.end();
+});
+
+test('returns false when parallel (diagonal)', function(t) {
+  var l1 = Line2(0, 0, 100, 100);
+  t.equal(l1.intersect(0, 5, 5, 10), false);
+  t.end();
+});
+
+test('isHorizontal - true if horizontal', function(t) {
+  var l = Line2.fromPoints(0, 0, 100, 0);
+  t.ok(l.isHorizontal());
+  t.end();
+});
+
+test('isHorizontal - false if not horizontal', function(t) {
+  var l = Line2.fromPoints(0, 0, 100, 10);
+  t.ok(!l.isHorizontal());
+  t.end();
+});
+
+test('true if vertical', function(t) {
+  var l = Line2.fromPoints(100, 0, 100, 100);
+  t.ok(l.isVertical());
+  t.end();
+});
+
+test('false if not vertical', function(t) {
+  var l = Line2.fromPoints(10, 0, 100, 10);
+  t.ok(!l.isVertical());
+  t.end();
+});
+
+test('containsPoint - may take an x,y', function(t) {
+  var l = Line2(0, 0, 10, 0);
+  t.ok(!l.containsPoint(5, 1));
+  t.ok(l.containsPoint(5, 0));
+  t.end();
+});
+
+test('containsPoint - returns false when not contained (horizontal)', function(t) {
+  var l = Line2(0, 0, 10, 0);
+  t.ok(!l.containsPoint(Vec2(5, 1)));
+  t.end();
+});
+
+test('containsPoint - returns true when contained (horizontal)', function(t) {
+  var l = Line2(0, 0, 10, 0);
+  t.ok(l.containsPoint(Vec2(5, 0)));
+  t.end();
+});
+
+test('containsPoint - returns false when not contained (vertical)', function(t) {
+  var l = Line2(10, 0, 10, 10);
+  t.ok(!l.containsPoint(Vec2(5, 1)));
+  t.end();
+});
+
+test('containsPoint - returns true when contained (vertical)', function(t) {
+  var l = Line2(10, 0, 10, 10);
+  t.ok(l.containsPoint(Vec2(10, 5)));
+  t.end();
+});
+
+test('containsPoint - returns true when contained (diagonal)', function(t) {
+  var l = Line2(0, 0, 10, 10);
+  t.ok(l.containsPoint(Vec2(5, 5)));
+  t.end();
+});
+
+test('containsPoint - returns false when not contained (diagonal)', function(t) {
+  var l = Line2(0, 0, 10, 10);
+  t.ok(!l.containsPoint(Vec2(5, 2)));
+  t.end();
+});
+
+test('createPerpendicular - should return a perpendicular line', function(t) {
+  var l = Line2(0, 0, 10, 10);
+  var l2 = l.createPerpendicular(Vec2(5,5));
+  t.equal(l2.yintercept(), 10);
+  t.equal(l2.slope(), -1);
+  t.end();
+});
+
+test('createPerpendicular - should return a perpendicular line (vertical)', function(t) {
+  var l = Line2(10, 0, 10, 10);
+  var l2 = l.createPerpendicular(Vec2(10,5));
+
+  t.equal(l2.yintercept(), 5);
+  t.equal(l2.slope(), 0);
+  t.end();
+});
+
+test('createPerpendicular - should return a perpendicular line (horizontal)', function(t) {
+  var l = Line2(0, 10, 10, 10);
+  var l2 = l.createPerpendicular(Vec2(5, 10));
+
+  t.equal(l2.xintercept(), 5);
+  t.equal(l2.slope(), Infinity);
+  t.end();
+});
+
+test('intersectCircle - should work from origin', function(t) {
+  var l = new Line2(2, 2);
+
+  var r = l.intersectCircle(Vec2(0, 0), 10);
+  t.equal(r.length, 2);
+  r.sort(function(a, b) {
+    return a.y > b.y ? -1 : 1;
   });
 
-  describe('#notify', function() {
-    it('calls all of the registered listeners', function() {
-      var l = new Line2();
-      var count = '';
-      var fn = l.change(function(line) {
-        ok(line === l);
-        count += 'f';
-      });
-      var fn2 = l.change(function(line) {
-        ok(line === l);
-        count += 'l';
-      });
+  t.ok(r[0].equal(3.65421149, 9.30842298));
+  t.ok(r[1].equal(-5.25421149, -8.50842298));
+  t.end();
+});
 
-      l.notify();
-      ok(count === 'fl');
-    });
+test('intersectCircle - returns an array of vec2s at intersection point (vertical on line)', function(t) {
+  var l = Line2(100, 0, 100, 100);
+  var r = l.intersectCircle(Vec2(100, 50), 55);
+  t.equal(r.length, 2);
+  r.sort(function(a, b) {
+    return a.y > b.y ? -1 : 1;
   });
 
-  describe('#yintercept', function() {
-    it('acts as a getter', function() {
-      var l = new Line2(0, 2, 100, 100);
-      ok(l.yintercept() === 2);
-    });
+  t.ok(r[0].equal(100, 105));
+  t.ok(r[1].equal(100, -5));
+  t.end();
+});
 
-    it('acts as a setter', function() {
-      var l = new Line2(0, 2, 100, 100);
-      l.yintercept(4);
-      ok(l.yintercept() === 4);
-    });
+test('intersectCircle - returns an array of vec2s at intersection point (vertical on circle center)', function(t) {
+  var l = Line2(100, 0, 100, 100);
+  var r = l.intersectCircle(Vec2(100, 50), 100);
 
-    it('acts as a setter and updates xintercept', function() {
-      var l = new Line2(0, 2, 20, 22);
-      l.yintercept(4);
-      ok(l.yintercept() === 4);
-      ok(l.xintercept() === -4);
-    });
-
-    it('acts as a setter and updates xintercept (horizontal)', function() {
-      var l = new Line2(0, 100, 100, 100);
-      l.yintercept(4);
-      ok(l.yintercept() === 4);
-      ok(l.xintercept() === null);
-    });
-
-    it('does not notify when set to the same value', function() {
-      var l = new Line2(0, 100, 100, 100);
-      var c = 0;
-      l.change(function() { c++; });
-
-      l.yintercept(100);
-      ok(l.yintercept() === 100);
-      ok(c === 0);
-    });
+  t.equal(r.length, 2);
+  r.sort(function(a, b) {
+    return a.y > b.y ? -1 : 1;
   });
 
-  describe('#slope', function() {
-    it('updates the x-intercept', function() {
-      var l = new Line2(1, 10);
-      ok(l.xintercept() === -10);
-      l.slope(-1);
-      ok(l.xintercept() === 10);
-    });
-
-    it('does not update the x-intercept (horizontal)', function() {
-      var l = new Line2(1, 10);
-      l.slope(0);
-      ok(l.xintercept() === null);
-    });
-
-    it('does not notify if changed to the same value', function() {
-      var l = new Line2(1, 10);
-      var c = 0;
-      l.change(function() { c++; });
-
-      l.slope(1);
-
-      ok(c === 0);
-    });
-
-  });
-
-
-  describe('#xintercept', function() {
-    it('acts as a getter', function() {
-      var l = new Line2(0, 2, 20, 22);
-      ok(l.xintercept() === -2);
-    });
-
-    it('acts as a setter', function() {
-      var l = new Line2(0, 2, 20, 22);
-      l.xintercept(4);
-      ok(l.xintercept() === 4);
-    });
-
-    it('acts as a setter and updates yintercept', function() {
-      var l = new Line2(3, 5);
-
-      l.xintercept(2);
-
-      ok(l.yintercept() === -6);
-      ok(l.xintercept() === 2);
-    });
-
-    it('acts as a setter and updates yintercept', function() {
-      var l = new Line2(0, 2, 20, 22);
-
-      l.xintercept(4);
-
-      ok(l.yintercept() === -4);
-      ok(l.xintercept() === 4);
-    });
-
-    it('acts as a setter and updates xintercept (vertical)', function() {
-      var l = new Line2(100, 0, 100, 100);
-      l.xintercept(4);
-      ok(l.xintercept() === 4);
-      ok(l.yintercept() === null);
-    });
-
-    it('does not notify when set to the same value', function() {
-      var l = new Line2(0, 0, 100, 100);
-      var c = 0;
-      l.change(function() { c++; });
-
-      l.xintercept(0);
-
-      ok(l.xintercept() === 0);
-      ok(c === 0);
-    });
-  });
-
-
-
-  describe('#fromPoints', function() {
-    it('computes the slope and yintercept', function() {
-      [
-        Line2.fromPoints([1, 1], [10, 10]),
-        Line2.fromPoints(Vec2(1, 1), Vec2(10, 10)),
-        Line2.fromPoints(1, 1, 10, 10),
-      ].forEach(function(line) {
-        ok(line.slope() === 1);
-        ok(line.yintercept() === 0);
-      });
-    });
-
-    it('computes the slope and yintercept (vertical)', function() {
-      var l = Line2.fromPoints(100, 0, 100, 100);
-      ok(l.slope() === Infinity);
-      ok(l.xintercept() === 100);
-      ok(l.isVertical());
-      ok(!l.isHorizontal());
-    });
-
-    it('computes the slope and yintercept (horizontal)', function() {
-      var l = Line2.fromPoints(0, 100, 100, 100);
-      ok(l.slope() === 0);
-      ok(l.yintercept() === 100);
-      ok(!l.isVertical());
-      ok(l.isHorizontal());
-    });
-
-    it('computes the slope and yintercept (diagonal)', function() {
-      var l = Line2.fromPoints(2, 8, 20, 80);
-      ok(l.slope() === 4);
-      ok(l.yintercept() === 0);
-      ok(!l.isVertical());
-      ok(!l.isHorizontal());
-    });
-
-    it('computes the slope and yintercept (diagonal)', function() {
-      var l = Line2.fromPoints(8, 2, 80, 20);
-      ok(l.slope() === 0.25);
-      ok(l.yintercept() === 0);
-      ok(!l.isVertical());
-      ok(!l.isHorizontal());
-    });
-
-    it('computes the slope and yintercept (diagonal)', function() {
-      var l = Line2.fromPoints(2, 0, 20, 18);
-      ok(l.slope() === 1);
-      ok(l.yintercept() === -2);
-      ok(!l.isVertical());
-      ok(!l.isHorizontal());
-    });
-  });
-
-  describe('#closestPointTo', function() {
-    it('finds the closest point to this line (horizontal)', function() {
-      var l = Line2.fromPoints(0, 0, 100, 0);
-      ok(l.closestPointTo(Vec2(10, 10)).equal(Vec2(10, 0)));
-    });
-
-    it('finds the closest point to this line (vertical)', function() {
-      var l = Line2.fromPoints(100, 0, 100, 100);
-      ok(l.closestPointTo(Vec2(10, 10)).equal(Vec2(100, 10)));
-    });
-
-    it('finds the closest point to this line (diagonal)', function() {
-      var l = Line2.fromPoints(0, 0, 100, 100);
-      ok(l.closestPointTo(Vec2(25, 75)).equal(Vec2(50, 50)));
-    });
-
-    it('finds the closest point to this line (diagonal)', function() {
-      var l = Line2(80, 0, 100, 100);
-      var r = l.closestPointTo(Vec2(99, 50));
-      ok(r.equal(90.34615385000001, 51.73076923));
-    });
-
-  });
-
-  describe('#intersect', function() {
-    it('computes the intersection of normal lines', function() {
-      var l1 = Line2.fromPoints(0, 0, 10, 10);
-      var l2 = Line2.fromPoints(0, 10, 10, 0);
-
-      var v = l1.intersect(l2);
-      ok(v.equal(5, 5));
-    });
-
-    it('returns false when lines are parallel', function() {
-      var l1 = Line2.fromPoints(0, 0, 10, 10);
-      var l2 = Line2.fromPoints(0, 5, 5, 10);
-
-      ok(!l1.intersect(l2));
-    });
-
-    it('returns true when lines are collinear', function() {
-      var l1 = Line2.fromPoints(0, 0, 10, 10);
-      var l2 = Line2.fromPoints(5, 5, 9, 9);
-      ok(l1.intersect(l2) === true);
-    });
-
-    it('finds the intersection of perpendicular lines (vertical-vertical)', function() {
-      var l1 = Line2.fromPoints(0, 0, 10, 0);
-      var l2 = Line2.fromPoints(5, 10, 5, 0);
-
-      ok(l1.intersect(l2).equal(5, 0));
-      ok(l2.intersect(l1).equal(5, 0));
-    });
-
-    it('finds intersection of lines (horizontal - diagonal)', function() {
-      var l1 = Line2.fromPoints(-100, -110, -101, -110);
-      var l2 = Line2.fromPoints(92.92893219, -107.07106781, 92.22182541, -106.36396103);
-
-      ok(l1.intersect(l2).equal(95.85786438, -110));
-    });
-
-    it('finds intersection of lines (horizontal - diagonal)', function() {
-      var l2 = Line2.fromPoints(-100, -110, -101, -110);
-      var l1 = Line2.fromPoints(92.92893219, -107.07106781, 92.22182541, -106.36396103);
-      console.log(l1.intersect(l2));
-      ok(l1.intersect(l2).equal(95.85786438, -110));
-    });
-
-    it('finds the intersection of lines (vertial-diagonal)', function() {
-      var l1 = Line2.fromPoints(0, 0, 55, 25);
-      var l2 = Line2.fromPoints(30, 30, 30, 0);
-      ok(l1.intersect(l2).equal(30, 13.6363635));
-      ok(l2.intersect(l1).equal(30, 13.6363635));
-    });
-
-    it('returns a vec2 when intersected with a segment (horizontal)', function() {
-      var l1 = Line2(0, 0, 100, 0);
-      ok(l1.intersect(5, 5, 5, -5).equal(5, 0));
-    });
-
-    it('returns a vec2 when intersected with a segment (horizontal - diagonal)', function() {
-      var l1 = Line2(0, 0, 100, 0);
-      ok(l1.intersect(50, 10, 30, -10).equal(40, 0));
-    });
-
-    it('returns false when no intersection (horizontal)', function() {
-      var l1 = Line2(0, 0, 100, 0);
-      ok(!l1.intersect(5, 5, 5, 1));
-    });
-
-    it('returns true when colinear (horizontal)', function() {
-      var l1 = Line2(0, 0, 100, 0);
-      ok(l1.intersect(0, 0, 5, 0) === true);
-    });
-
-    it('returns false when parallel (horizontal)', function() {
-      var l1 = Line2(0, 0, 100, 0);
-      ok(l1.intersect(0, 5, 5, 5) === false);
-    });
-
-    it('returns true when colinear (vertical)', function() {
-      var l1 = Line2(100, 0, 100, 100);
-      ok(l1.intersect(100, 10, 100, 50) === true);
-    });
-
-    it('returns vec2 when intersection (vertical)', function() {
-      var l1 = Line2(100, 0, 100, 100);
-      ok(l1.intersect(50, 50, 200, 50).equal(100, 50));
-    });
-
-    it('returns false when parallel (vertical)', function() {
-      var l1 = Line2(100, 0, 100, 100);
-      ok(l1.intersect(5, 0, 5, 5) === false);
-    });
-
-    it('returns a vec2 when intersected with a segment (diagonal)', function() {
-      var l1 = Line2(0, 0, 100, 100);
-      ok(l1.intersect(25, 75, 75, 25).equal(50, 50));
-    });
-
-    it('returns false when no intersection (diagonal)', function() {
-      var l1 = Line2(0, 0, 100, 100);
-      ok(!l1.intersect(25, 75, 30, 75));
-    });
-
-    it('returns true when colinear (diagonal)', function() {
-      var l1 = Line2(0, 0, 100, 0);
-      ok(l1.intersect(0, 0, 5, 0) === true);
-    });
-
-    it('returns false when parallel (diagonal)', function() {
-      var l1 = Line2(0, 0, 100, 100);
-      ok(l1.intersect(0, 5, 5, 10) === false);
-    });
-  });
-
-  describe('#isHorizontal', function() {
-    it('true if horizontal', function() {
-      var l = Line2.fromPoints(0, 0, 100, 0);
-      ok(l.isHorizontal());
-    });
-    it('false if not horizontal', function() {
-      var l = Line2.fromPoints(0, 0, 100, 10);
-      ok(!l.isHorizontal());
-    });
-  });
-
-  describe('#isVertical', function() {
-    it('true if vertical', function() {
-      var l = Line2.fromPoints(100, 0, 100, 100);
-      ok(l.isVertical());
-    });
-    it('false if not vertical', function() {
-      var l = Line2.fromPoints(10, 0, 100, 10);
-      ok(!l.isVertical());
-    });
-  });
-
-  describe('#containsPoint', function() {
-    it('may take an x,y', function() {
-      var l = Line2(0, 0, 10, 0);
-      ok(!l.containsPoint(5, 1));
-      ok(l.containsPoint(5, 0));
-    });
-
-    it('returns false when not contained (horizontal)', function() {
-      var l = Line2(0, 0, 10, 0);
-      ok(!l.containsPoint(Vec2(5, 1)));
-    });
-
-    it('returns true when contained (horizontal)', function() {
-      var l = Line2(0, 0, 10, 0);
-      ok(l.containsPoint(Vec2(5, 0)));
-    });
-
-    it('returns false when not contained (vertical)', function() {
-      var l = Line2(10, 0, 10, 10);
-      ok(!l.containsPoint(Vec2(5, 1)));
-    });
-
-    it('returns true when contained (vertical)', function() {
-      var l = Line2(10, 0, 10, 10);
-      ok(l.containsPoint(Vec2(10, 5)));
-    });
-
-    it('returns true when contained (diagonal)', function() {
-      var l = Line2(0, 0, 10, 10);
-      ok(l.containsPoint(Vec2(5, 5)));
-    });
-
-    it('returns false when not contained (diagonal)', function() {
-      var l = Line2(0, 0, 10, 10);
-      ok(!l.containsPoint(Vec2(5, 2)));
-    });
-  });
-
-  describe('#createPerpendicular', function() {
-    it('should return a perpendicular line', function() {
-      var l = Line2(0, 0, 10, 10);
-      var l2 = l.createPerpendicular(Vec2(5,5));
-      ok(l2.yintercept() === 10);
-      ok(l2.slope() === -1);
-    });
-
-    it('should return a perpendicular line (vertical)', function() {
-      var l = Line2(10, 0, 10, 10);
-      var l2 = l.createPerpendicular(Vec2(10,5));
-
-      ok(l2.yintercept() === 5);
-      ok(l2.slope() === 0);
-    });
-
-    it('should return a perpendicular line (horizontal)', function() {
-      var l = Line2(0, 10, 10, 10);
-      var l2 = l.createPerpendicular(Vec2(5, 10));
-
-      ok(l2.xintercept() === 5);
-      ok(l2.slope() === Infinity);
-    });
-  });
-
-  describe('#intersectCircle', function() {
-    it('should work from origin', function() {
-      var l = new Line2(2, 2);
-
-      var r = l.intersectCircle(Vec2(0, 0), 10);
-      ok(r.length === 2);
-      r.sort(function(a, b) {
-        return a.y > b.y ? -1 : 1;
-      });
-
-      ok(r[0].equal(3.65421149, 9.30842298));
-      ok(r[1].equal(-5.25421149, -8.50842298));
-    });
-
-    it('returns an array of vec2s at intersection point (vertical on line)', function() {
-      var l = Line2(100, 0, 100, 100);
-      var r = l.intersectCircle(Vec2(100, 50), 55);
-      ok(r.length === 2);
-      r.sort(function(a, b) {
-        return a.y > b.y ? -1 : 1;
-      });
-
-      ok(r[0].equal(100, 105));
-      ok(r[1].equal(100, -5));
-    });
-
-    it('returns an array of vec2s at intersection point (vertical on circle center)', function() {
-      var l = Line2(100, 0, 100, 100);
-      var r = l.intersectCircle(Vec2(100, 50), 100);
-
-      ok(r.length === 2);
-      r.sort(function(a, b) {
-        return a.y > b.y ? -1 : 1;
-      });
-
-      ok(r[0].equal(100, 150));
-      ok(r[1].equal(100, -50));
-    });
-
-    it('returns a single item array when tangent', function() {
-      var l = Line2(0, 100, 100, 100);
-      var r = l.intersectCircle(Vec2(50, 50), 50);
-
-      ok(r.length === 1);
-      ok(r[0].equal(50, 100));
-    });
-
-    it('returns an array of vec2s at intersection point (horizontal)', function() {
-      var l = Line2(0, 0, 100, 0);
-      var r = l.intersectCircle(Vec2(50, 50), 55);
-
-      ok(r.length === 2);
-      ok(r[0].equal(72.91287847, 0));
-      ok(r[1].equal(27.08712153, 0));
-    });
-
-    it('returns an array of vec2s at intersection point (diagonal)', function() {
-      var l = Line2(0, 0, 100, 100);
-      var r = l.intersectCircle(Vec2(50, 50), 10);
-
-      ok(r.length === 2);
-      ok(r[0].equal(57.07106781, 57.07106781));
-      ok(r[1].equal(42.92893219, 42.92893219));
-    });
-
-
-    it('returns [] when no intersection (diagonal)', function() {
-      var l = Line2(0, 0, 100, 100);
-      var r = l.intersectCircle(Vec2(50, 0), 10);
-
-      ok(!r.length);
-    });
-
-    it('returns [] when no intersection (vertical)', function() {
-      var l = Line2(100, 0, 100, 100);
-      var r = l.intersectCircle(Vec2(50, 0), 10);
-      ok(!r.length);
-    });
-
-    it('returns [] when no intersection (horizontal)', function() {
-      var l = Line2(0, 100, 100, 100);
-      var r = l.intersectCircle(Vec2(50, 0), 10);
-      ok(!r.length);
-    });
-
-    it('returns [] when no intersection (horizontal)', function() {
-      var l = Line2(0, 100, 100, 100);
-      var r = l.intersectCircle(Vec2(50, 0), 10);
-      ok(!r.length);
-    });
-
-    it('returns an array of vec2s at intersection point (vertical off circle)', function() {
-      var l = Line2(100, 0, 100, 100);
-      var r = l.intersectCircle(Vec2(120, 50), 100);
-
-      ok(r.length === 2);
-      ok(r[0].equal(100, 147.97958971));
-      ok(r[1].equal(100, -47.97958971));
-    });
-  });
+  t.ok(r[0].equal(100, 150));
+  t.ok(r[1].equal(100, -50));
+  t.end();
+});
+
+test('intersectCircle - returns a single item array when tangent', function(t) {
+  var l = Line2(0, 100, 100, 100);
+  var r = l.intersectCircle(Vec2(50, 50), 50);
+
+  t.equal(r.length, 1);
+  t.ok(r[0].equal(50, 100));
+  t.end();
+});
+
+test('intersectCircle - returns an array of vec2s at intersection point (horizontal)', function(t) {
+  var l = Line2(0, 0, 100, 0);
+  var r = l.intersectCircle(Vec2(50, 50), 55);
+
+  t.equal(r.length, 2);
+  t.ok(r[0].equal(72.91287847, 0));
+  t.ok(r[1].equal(27.08712153, 0));
+  t.end();
+});
+
+test('intersectCircle - returns an array of vec2s at intersection point (diagonal)', function(t) {
+  var l = Line2(0, 0, 100, 100);
+  var r = l.intersectCircle(Vec2(50, 50), 10);
+
+  t.equal(r.length, 2);
+  t.ok(r[0].equal(57.07106781, 57.07106781));
+  t.ok(r[1].equal(42.92893219, 42.92893219));
+  t.end();
+});
+
+test('intersectCircle - returns [] when no intersection (diagonal)', function(t) {
+  var l = Line2(0, 0, 100, 100);
+  var r = l.intersectCircle(Vec2(50, 0), 10);
+
+  t.ok(!r.length);
+  t.end();
+});
+
+test('intersectCircle - returns [] when no intersection (vertical)', function(t) {
+  var l = Line2(100, 0, 100, 100);
+  var r = l.intersectCircle(Vec2(50, 0), 10);
+  t.ok(!r.length);
+  t.end();
+});
+
+test('intersectCircle - returns [] when no intersection (horizontal)', function(t) {
+  var l = Line2(0, 100, 100, 100);
+  var r = l.intersectCircle(Vec2(50, 0), 10);
+  t.ok(!r.length);
+  t.end();
+});
+
+test('intersectCircle - returns [] when no intersection (horizontal)', function(t) {
+  var l = Line2(0, 100, 100, 100);
+  var r = l.intersectCircle(Vec2(50, 0), 10);
+  t.ok(!r.length);
+  t.end();
+});
+
+test('intersectCircle - returns an array of vec2s at intersection point (vertical off circle)', function(t) {
+  var l = Line2(100, 0, 100, 100);
+  var r = l.intersectCircle(Vec2(120, 50), 100);
+
+  t.equal(r.length, 2);
+  t.ok(r[0].equal(100, 147.97958971));
+  t.ok(r[1].equal(100, -47.97958971));
+  t.end();
 });
