@@ -301,6 +301,11 @@ Line2.prototype.intersect = function(line, y1, x2, y2) {
             this.xintercept() === line.xintercept());
   }
 
+  if (!finite(s1) && !finite(s2)) {
+    return (this.yintercept() === line.yintercept() &&
+            this.xintercept() === line.xintercept());
+  }  
+
   if (finite(s1) && finite(s2)) {
     if (this.isHorizontal()) {
       return new Vec2(line.solveForX(this.yintercept()), this.yintercept())

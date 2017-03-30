@@ -323,6 +323,21 @@ test('intersect - finds the intersection of perpendicular lines (vertical-vertic
   t.end();
 });
 
+test('intersect - returns true when colinear (vertical)', function (t) {
+  var l1 = Line2.fromPoints(10,0, 10, 10)
+  var l2 = Line2.fromPoints(10,10,10,0)
+  t.equal(l1.intersect(l2), true);
+  t.end();  
+})
+
+test('intersect - returns false when intersection (vertical)', function (t) {
+  var l1 = Line2.fromPoints(10,0, 10, 10)
+  var l2 = Line2.fromPoints(11,10,11,0)
+  t.equal(l1.intersect(l2), false);
+  t.end();  
+})
+
+
 test('intersect - finds intersection of lines (horizontal - diagonal)', function(t) {
   var l1 = Line2.fromPoints(-100, -110, -101, -110);
   var l2 = Line2.fromPoints(92.92893219, -107.07106781, 92.22182541, -106.36396103);
